@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "python-template"
+name = "DealerKiller"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+description = "A LLM-based chat bot that negotiates car price with dealers"
+authors = ["Yifan Zhang <zyfinori@gmail.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.12"
