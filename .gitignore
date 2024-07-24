@@ -168,3 +168,5 @@ token.json
 
 # images
 images
+# Ignore dynaconf secret files
+.secrets.*

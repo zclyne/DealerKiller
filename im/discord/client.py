@@ -1,21 +1,24 @@
-from typing import Optional
 import logging
+from typing import Optional
+
 import discord
 from discord import app_commands
+
+from im.discord.message_type import MessageType
 from im.discord.ui.mail_response_view import MailResponseView
 from im.discord.ui.new_mail_view import NewMailView
-from im.discord.message_type import MessageType
-
-MY_GUILD = discord.Object(id=1264372372295647353)
-ZK_GUILD = discord.Object(id=1051311876941811763)
 
 logger = logging.getLogger(__name__)
 
+
 class DiscordClient(discord.Client):
-    def __init__(self, channel_id: int, *, intents: discord.Intents = discord.Intents.all()):
+    def __init__(
+        self, channel_id: int, *, intents: discord.Intents = discord.Intents.all()
+    ):
         super().__init__(intents=intents)
         # A CommandTree is a special type that holds all the application command
-        # state required to make it work. This is a separate class because it
+        # state required to make it work. This i
+        # s a separate class because it
         # allows all the extra state to be opt-in.
         # Whenever you want to work with application commands, your tree is used
         # to store and work with them.
@@ -34,8 +37,6 @@ class DiscordClient(discord.Client):
         # This copies the global commands over to your guild.
         self.tree.copy_global_to(guild=MY_GUILD)
         await self.tree.sync(guild=MY_GUILD)
-        self.tree.copy_global_to(guild=ZK_GUILD)
-        await self.tree.sync(guild=ZK_GUILD)
 
     async def on_ready(self):
         logger.info(f"We have logged in as {self.user}")
@@ -54,11 +55,12 @@ class DiscordClient(discord.Client):
         view = None
         match message_type:
             case MessageType.MailContent:
-                view=NewMailView()
+                view = NewMailView()
             case MessageType.MailResponse:
-                view=MailResponseView()  
+                view = MailResponseView()
         await channel.send(content, view=view)
         logger.info("successfully sent message")
+
 
 @app_commands.command()
 @app_commands.describe(
