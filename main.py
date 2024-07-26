@@ -21,15 +21,14 @@ async def main():
     # print(email.get_content())
 
     discord_settings = settings.im.discord
-    client = DiscordClient(
-        guild_id=discord_settings.guild_id, channel_id=discord_settings.channel_id
-    )
+    client = DiscordClient(guild_id=discord_settings.guild_id)
 
     async def send():
         await asyncio.sleep(20)
-        await client.send_message(
-            "hello from async", message_type=MessageType.MailContent
-        )
+        # await client.send_message(
+        #     "hello from async", message_type=MessageType.MailContent
+        # )
+        await client.create_text_channel("test-channel")
 
     task1 = asyncio.create_task(send())
     task2 = asyncio.create_task(client.start(token=discord_settings.token))

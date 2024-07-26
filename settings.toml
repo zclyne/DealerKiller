@@ -1,5 +1,2 @@
 [im.discord]
 guild_id = 1264372372295647353
-# TODO: channel_id will be removed in the futre
-# for each dealer, a new channel or thread should be created
-channel_id = 1264372372295647356
