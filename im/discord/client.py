@@ -3,6 +3,7 @@ import logging
 import discord
 from discord import app_commands
 
+from config import settings
 from im.discord.message_type import MessageType
 from im.discord.ui.mail_response_view import MailResponseView
 from im.discord.ui.new_mail_view import NewMailView
@@ -54,8 +55,10 @@ class DiscordClient(discord.Client):
         if message.content.startswith("prompt"):
             await message.channel.send("prompt test", view=MailResponseView())
 
-    async def send_message(self, content: str, message_type: MessageType):
-        channel = await self.fetch_channel(self.channel_id)
+    async def send_message(
+        self, channel_id: int, content: str, message_type: MessageType
+    ):
+        channel = self.get_channel(channel_id)
         view = None
         match message_type:
             case MessageType.MailContent:
@@ -108,3 +111,10 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
     await interaction.response.send_message(
         f"{first_value} + {second_value} = {first_value + second_value}"
     )
+
+
+_default_discord_client = DiscordClient(guild_id=settings.im.discord.guild_id)
+
+
+def get_client() -> DiscordClient:
+    return _default_discord_client

@@ -2,7 +2,10 @@ import asyncio
 import logging
 
 from config import settings
-from im.discord.client import DiscordClient
+from event.dispatcher import default_event_dispatcher
+from im.discord.client import get_client
+from im.discord.events.generated_response import GeneratedResponseEvent
+from im.discord.events.new_mail import NewMailEvent
 from im.discord.message_type import MessageType
 from mail.gmail_client import GmailClient
 
@@ -20,20 +23,38 @@ async def main():
     # email = gmail_client.get_email(id)
     # print(email.get_content())
 
-    discord_settings = settings.im.discord
-    client = DiscordClient(guild_id=discord_settings.guild_id)
-
     async def send():
-        await asyncio.sleep(20)
+        await asyncio.sleep(3)
         # await client.send_message(
         #     "hello from async", message_type=MessageType.MailContent
         # )
-        await client.create_text_channel("test-channel")
+        # await client.create_text_channel("test-channel")
+        event = NewMailEvent(
+            channel_id=1265862969770905635,
+            sender="a.b",
+            receiver="c.d",
+            content="hello world",
+        )
+        await default_event_dispatcher.put_event(event)
+        await asyncio.sleep(3)
+        event = GeneratedResponseEvent(
+            channel_id=1265862969770905635, content="generated"
+        )
+        await default_event_dispatcher.put_event(event)
 
-    task1 = asyncio.create_task(send())
-    task2 = asyncio.create_task(client.start(token=discord_settings.token))
+    async def shutdown():
+        await asyncio.sleep(50)
+        await default_event_dispatcher.stop()
+        await get_client().close()
+
+    task1 = asyncio.create_task(get_client().start(token=settings.im.discord.token))
+    task2 = asyncio.create_task(default_event_dispatcher.start())
+    task3 = asyncio.create_task(shutdown())
+    task4 = asyncio.create_task(send())
     await task1
     await task2
+    await task3
+    await task4
 
 
 if __name__ == "__main__":
