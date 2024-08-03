@@ -164,7 +164,7 @@ cython_debug/
 # gmail credentials
 credentials.json
 token.json
-
+gmail_token.json
 
 # images
 images

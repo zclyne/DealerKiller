@@ -34,6 +34,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from config import settings
 from mail.gmail import label
 from mail.gmail.attachment import Attachment
 from mail.gmail.label import Label
@@ -115,12 +116,6 @@ class Gmail:
         self._service = build(
             "gmail", "v1", credentials=self.creds, cache_discovery=False
         )
-
-    # def _run_auth_flow_from_file(self) -> None:
-    #     flow = InstalledAppFlow.from_client_secrets_file(
-    #         self._client_secret_file, self.SCOPES
-    #     )
-    #     self.creds = flow.run_local_server(port=0)
 
     def _run_auth_flow_from_config(self) -> None:
         flow = InstalledAppFlow.from_client_config(
@@ -1143,3 +1138,10 @@ class Gmail:
 
         res = req.execute()
         return res
+
+
+_default_gmail_client = Gmail.from_dynaconf_settings(settings)
+
+
+def get_client() -> Gmail:
+    return _default_gmail_client
