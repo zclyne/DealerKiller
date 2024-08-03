@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import html
 import json
+import logging
 import math
 import mimetypes
 import os
@@ -39,6 +40,9 @@ from mail.gmail import label
 from mail.gmail.attachment import Attachment
 from mail.gmail.label import Label
 from mail.gmail.message import Message
+from mail.gmail.user_profile import UserProfile
+
+logger = logging.getLogger(__name__)
 
 
 class Gmail:
@@ -69,13 +73,15 @@ class Gmail:
     def from_dynaconf_settings(cls, settings: Dynaconf) -> Gmail:
         gmail_settings = settings.email.gmail
         cred_config = {
-            "client_id": gmail_settings.client_id,
-            "project_id": gmail_settings.project_id,
-            "auth_uri": gmail_settings.auth_uri,
-            "token_uri": gmail_settings.token_uri,
-            "auth_provider_x509_cert_url": gmail_settings.auth_provider_x509_cert_url,
-            "client_secret": gmail_settings.client_secret,
-            "redirect_uris": gmail_settings.redirect_uris,
+            "installed": {
+                "client_id": gmail_settings.client_id,
+                "project_id": gmail_settings.project_id,
+                "auth_uri": gmail_settings.auth_uri,
+                "token_uri": gmail_settings.token_uri,
+                "auth_provider_x509_cert_url": gmail_settings.auth_provider_x509_cert_url,
+                "client_secret": gmail_settings.client_secret,
+                "redirect_uris": gmail_settings.redirect_uris,
+            }
         }
         return cls.from_credentials_config(cred_config)
 
@@ -87,7 +93,6 @@ class Gmail:
 
     @classmethod
     def from_credentials_config(cls, credentials_config: dict[str:any]) -> Gmail:
-        # TODO: implement
         return Gmail(credentials_config)
 
     def __init__(
@@ -97,7 +102,9 @@ class Gmail:
     ) -> None:
         self._credentials_config = credentials_config
         self._token_file = token_file
+        self.creds = None
         if os.path.exists(token_file):
+            logger.info(f"found token file {token_file}, trying to create credentials")
             # token_file stores the user's access and refresh
             # tokens, and is created automatically when the authorization flow
             # completes for the first time.
@@ -107,6 +114,7 @@ class Gmail:
 
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
+                logger.info(f"credentials expired, refreshing")
                 self.creds.refresh(Request())
             else:
                 self._run_auth_flow_from_config()
@@ -117,9 +125,11 @@ class Gmail:
             "gmail", "v1", credentials=self.creds, cache_discovery=False
         )
 
+        self._profile = self.get_user_profile()
+
     def _run_auth_flow_from_config(self) -> None:
         flow = InstalledAppFlow.from_client_config(
-            self._credentials_config, self.SCOPES
+            self._credentials_config, self._SCOPES
         )
         self.creds = flow.run_local_server(port=0)
 
@@ -129,6 +139,25 @@ class Gmail:
                 token.write(self.creds.to_json())
         except IOError as e:
             self.logger.error(f"Failed to save credentials: {e}")
+
+    def get_user_profile(self) -> UserProfile:
+        try:
+            # Get user profile
+            profile = self.service.users().getProfile(userId="me").execute()
+        except HttpError as error:
+            # Pass along the error
+            raise error
+        else:
+            return UserProfile(
+                email_address=profile["emailAddress"],
+                messages_total=profile["messagesTotal"],
+                threads_total=profile["threadsTotal"],
+                history_id=profile["historyId"],
+            )
+
+    @property
+    def profile(self) -> UserProfile:
+        return self._profile
 
     @property
     def service(self) -> "googleapiclient.discovery.Resource":
@@ -141,7 +170,6 @@ class Gmail:
 
     def send_message(
         self,
-        sender: str,
         to: str,
         subject: str = "",
         msg_html: Optional[str] = None,
@@ -156,7 +184,6 @@ class Gmail:
         Sends an email.
 
         Args:
-            sender: The email address the message is being sent from.
             to: The email address the message is being sent to.
             subject: The subject line of the email.
             msg_html: The HTML message of the email.
@@ -181,7 +208,6 @@ class Gmail:
         """
 
         msg = self._create_message(
-            sender,
             to,
             subject,
             msg_html,
@@ -984,7 +1010,6 @@ class Gmail:
 
     def _create_message(
         self,
-        sender: str,
         to: str,
         subject: str = "",
         msg_html: str = None,
@@ -999,7 +1024,6 @@ class Gmail:
         Creates the raw email message to be sent.
 
         Args:
-            sender: The email address the message is being sent from.
             to: The email address the message is being sent to.
             subject: The subject line of the email.
             msg_html: The HTML message of the email.
@@ -1016,7 +1040,7 @@ class Gmail:
             The message dict.
 
         """
-
+        sender = self.profile.email_address
         msg = MIMEMultipart("mixed" if attachments else "alternative")
         msg["To"] = to
         msg["From"] = sender

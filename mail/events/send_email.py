@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from config import settings
 from event.dispatcher import default_event_dispatcher
 from event.error import WrongEventTypeError
 from event.event import Event
@@ -13,16 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class SendMailEvent(Event):
-    def __init__(self, sender: str, receiver: str, subject: str, content: str) -> None:
+    def __init__(self, receiver: str, subject: str, content: str) -> None:
         # TODO: support attachment
         self.type: str = SEND_MAIL_EVENT
-        self.sender: str = sender
         self.receiver: str = receiver
         self.subject: str = subject
         self.content: str = content
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(type={self.type!r}, sender={self.sender!r}, receiver={self.receiver!r}, content={self.content!r})"
+        return f"{self.__class__.__name__}(type={self.type!r}, receiver={self.receiver!r}, subject={self.subject!r}, content={self.content!r})"
 
 
 class SendMailEventHandler(EventHandler):
@@ -32,13 +32,16 @@ class SendMailEventHandler(EventHandler):
                 f"event {event} is not instance of {SendMailEvent.__name__}"
             )
         logger.info(f"handling send mail event {event}")
-        message = get_client().send_message(
-            sender=event.sender,
-            to=event.receiver,
-            subject=event.subject,
-            msg_plain=event.content,
-        )
-        logger.info(f"successfully sent mail {message}")
+        try:
+            message = get_client().send_message(
+                to=event.receiver,
+                subject=event.subject,
+                msg_plain=event.content,
+            )
+        except Exception as e:
+            logger.error(f"failed to send mail, err is {e}")
+        else:
+            logger.info(f"successfully sent mail {message}")
         # TODO: error handling
 
 

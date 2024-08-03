@@ -9,6 +9,7 @@ from im.discord.events.new_mail import NewMailEvent
 from im.discord.message_type import MessageType
 from mail.events.send_email import SendMailEvent
 from mail.gmail.gmail import Gmail
+from mail.gmail.gmail import get_client as get_gmail_client
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,13 +32,13 @@ async def main():
         # )
         # await client.create_text_channel("test-channel")
         event = SendMailEvent(
-            sender="a.b",
             receiver="zyfayanami@gmail.com",
             subject="hello world",
             content="hello world from dealerkiller",
         )
+        print("adding send mail event")
         await default_event_dispatcher.put_event(event)
-        await asyncio.sleep(20)
+        await asyncio.sleep(30)
 
     # async def shutdown():
     #     await asyncio.sleep(50)
@@ -45,11 +46,11 @@ async def main():
     #     await get_client().close()
 
     # task1 = asyncio.create_task(get_client().start(token=settings.im.discord.token))
-    # task2 = asyncio.create_task(default_event_dispatcher.start())
+    task2 = asyncio.create_task(default_event_dispatcher.start())
     # task3 = asyncio.create_task(shutdown())
     task4 = asyncio.create_task(send())
     # await task1
-    # await task2
+    await task2
     # await task3
     await task4
     # gmail = Gmail.from_dynaconf_settings(settings)
@@ -59,6 +60,7 @@ async def main():
     #     print(email.date)
 
     # print(gmail.get_message_by_id("19119627f2ac07ce"))
+    # print(get_gmail_client().profile)
 
 
 if __name__ == "__main__":
