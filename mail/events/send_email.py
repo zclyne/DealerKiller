@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from config import settings
 from event.dispatcher import default_event_dispatcher
 from event.error import WrongEventTypeError
 from event.event import Event
@@ -15,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class SendMailEvent(Event):
     def __init__(self, receiver: str, subject: str, content: str) -> None:
-        # TODO: support attachment
         self.type: str = SEND_MAIL_EVENT
         self.receiver: str = receiver
         self.subject: str = subject
@@ -42,7 +40,6 @@ class SendMailEventHandler(EventHandler):
             logger.error(f"failed to send mail, err is {e}")
         else:
             logger.info(f"successfully sent mail {message}")
-        # TODO: error handling
 
 
 asyncio.run(default_event_dispatcher.register(SEND_MAIL_EVENT, SendMailEventHandler()))
