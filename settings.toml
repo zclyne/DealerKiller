@@ -1,9 +1,23 @@
 [im.discord]
 guild_id = 1264372372295647353
 
+[dealer]
+# brands will be used to verify whether an email address belongs to a dealer or not
+brands = ["honda", "mazda", "toyota", "hyundai", "kia", "bmw", "benz"]
+
+[email]
+# batch_size represents the number of unread messages being read every `check_interval_minutes` minutes
+batch_size = 20
+# check_interval_minutes represents the frequency of checking the unread inbox
+check_interval_minutes = 5
+
 [email.gmail]
 project_id = "dealerkiller"
 auth_uri = "https://accounts.google.com/o/oauth2/auth"
 token_uri = "https://oauth2.googleapis.com/token"
 auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
 redirect_uris = ["http://localhost"]
+
+[llm.openai]
+base_url = "http://localhost:11434/v1" # default ollama openai api endpoint
+model = "llama3.1"
