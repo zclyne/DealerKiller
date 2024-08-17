@@ -56,10 +56,15 @@ class DiscordClient(discord.Client):
             await message.channel.send("prompt test", view=MailResponseView())
 
     async def send_message(
-        self, channel_id: int, content: str, message_type: MessageType
+        self,
+        channel_id: int,
+        dealer_email: str,
+        content: str,
+        message_type: MessageType,
     ):
         channel = self.get_channel(channel_id)
         view = None
+        # TODO: dealer's email address should be carried in view
         match message_type:
             case MessageType.MailContent:
                 view = NewMailView()
@@ -116,5 +121,5 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
 _default_discord_client = DiscordClient(guild_id=settings.im.discord.guild_id)
 
 
-def get_client() -> DiscordClient:
+def discord() -> DiscordClient:
     return _default_discord_client

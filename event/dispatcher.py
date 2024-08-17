@@ -7,6 +7,23 @@ from event.handler import EventHandler
 
 logger = logging.getLogger(__name__)
 
+# TODO: use decorator to register even handler
+# event_handler_registry: dict[str, EventHandler] = {}
+
+
+# def register_handler(event_type: str):
+#     """decorator to register a given function as an event handler
+
+#     Args:
+#         event_type (str): type of the event
+#     """
+
+#     def register_handler_inner(func):
+#         event_handler_registry[event_type] = func
+#         return func
+
+#     return register_handler_inner
+
 
 class EventDispatcher:
     def __init__(self):
@@ -73,3 +90,11 @@ class EventDispatcher:
 
 
 default_event_dispatcher = EventDispatcher()
+
+
+async def register_handler(event_type: str, handler: EventHandler):
+    await default_event_dispatcher.register(event_type, handler)
+
+
+async def put_event(event: Event):
+    await default_event_dispatcher.put_event(event)

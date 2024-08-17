@@ -1,5 +1,6 @@
 [im.discord]
 guild_id = 1264372372295647353
+channel_id = 1265862969770905635
 
 [dealer]
 # brands will be used to verify whether an email address belongs to a dealer or not

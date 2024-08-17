@@ -61,16 +61,22 @@ def insert_conversation(dealer_email: str, engine: Engine = default_engine):
 def get_conversation_by_email_address(
     dealer_email: str, engine: Engine = default_engine
 ) -> Conversation:
+    """get a conversation associated with the given email address
+
+    Args:
+        dealer_email (str): email address of the dealer
+        engine (Engine, optional): Database engine. Defaults to default_engine.
+
+    Raises:
+        e: raises `NoResultFound` if no conversation is found
+
+    Returns:
+        Conversation: the conversation object with the given dealer
+    """
     stmt = select(Conversation).where(Conversation.dealer_email == dealer_email)
     with Session(engine) as session:
-        try:
-            result = session.scalars(stmt).one()
-            return result
-        except NoResultFound as e:
-            logger.error(
-                f"no result found for conversation with email_address={dealer_email}"
-            )
-            raise e
+        result = session.scalars(stmt).one()
+        return result
 
 
 def insert_message(

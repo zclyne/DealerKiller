@@ -45,7 +45,7 @@ def test_insert_conversation_if_not_exist(
     expected: bool,
     engine: Engine,
 ):
-    initialize_conversations(existing_conversations, engine)
+    _initialize_conversations(existing_conversations, engine)
 
     result = db.insert_conversation_if_not_exist(new_email, engine=engine)
     assert result == expected
@@ -81,7 +81,7 @@ def test_insert_conversation(
     expectation: AbstractContextManager,
     engine: Engine,
 ):
-    initialize_conversations(existing_conversations, engine)
+    _initialize_conversations(existing_conversations, engine)
 
     with expectation:
         db.insert_conversation(new_email, engine=engine)
@@ -126,7 +126,7 @@ def test_get_conversation_by_email_address(
     expectation: AbstractContextManager,
     engine: Engine,
 ):
-    initialize_conversations(existing_conversations, engine)
+    _initialize_conversations(existing_conversations, engine)
 
     with expectation:
         db.get_conversation_by_email_address(email_to_find, engine=engine)
@@ -182,8 +182,8 @@ def test_insert_message(
     expectation: AbstractContextManager,
     engine: Engine,
 ):
-    initialize_conversations(existing_conversations, engine)
-    initialize_messages(existing_messages, engine)
+    _initialize_conversations(existing_conversations, engine)
+    _initialize_messages(existing_messages, engine)
 
     with expectation:
         m = db.insert_message(
@@ -282,8 +282,8 @@ def test_get_message_by_id(
     expectation: AbstractContextManager,
     engine: Engine,
 ):
-    initialize_conversations(existing_conversations, engine)
-    initialize_messages(existing_messages, engine)
+    _initialize_conversations(existing_conversations, engine)
+    _initialize_messages(existing_messages, engine)
 
     with expectation:
         m = db.get_message_by_id(message_id_to_get, engine)
@@ -293,14 +293,14 @@ def test_get_message_by_id(
         assert m.conversation_id == expected_message.conversation_id
 
 
-# util functions to initialize the db
-def initialize_messages(messages: list[Message], engine: Engine):
+# util functions to initialize the db for testing
+def _initialize_messages(messages: list[Message], engine: Engine):
     with Session(engine) as session:
         session.add_all(messages)
         session.commit()
 
 
-def initialize_conversations(conversations: list[Conversation], engine: Engine):
+def _initialize_conversations(conversations: list[Conversation], engine: Engine):
     with Session(engine) as session:
         session.add_all(conversations)
         session.commit()
