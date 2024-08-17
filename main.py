@@ -3,7 +3,7 @@ import logging
 
 from config import settings
 from event.dispatcher import default_event_dispatcher
-from im.discord.client import get_client
+from im.discord.client import discord
 from im.discord.events.generated_response import GeneratedResponseEvent
 from im.discord.events.new_mail import NewMailEvent
 from im.discord.message_type import MessageType
