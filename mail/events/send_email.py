@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from event.dispatcher import default_event_dispatcher
+import event
 from event.error import WrongEventTypeError
 from event.event import Event
 from event.handler import EventHandler
@@ -23,6 +23,7 @@ class SendMailEvent(Event):
         return f"{self.__class__.__name__}(type={self.type!r}, receiver={self.receiver!r}, subject={self.subject!r}, content={self.content!r})"
 
 
+@event.handler(event_type=SEND_MAIL_EVENT)
 class SendMailEventHandler(EventHandler):
     async def handle(self, event: Event):
         if not isinstance(event, SendMailEvent):
@@ -40,6 +41,3 @@ class SendMailEventHandler(EventHandler):
             logger.error(f"failed to send mail, err is {e}")
         else:
             logger.info(f"successfully sent mail {message}")
-
-
-asyncio.run(default_event_dispatcher.register(SEND_MAIL_EVENT, SendMailEventHandler()))

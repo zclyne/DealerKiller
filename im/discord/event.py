@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import event
 from config import settings
 from event.dispatcher import register_handler
 from event.error import WrongEventTypeError
@@ -26,6 +27,7 @@ class GeneratedResponseEvent(Event):
         return f"{self.__class__.__name__}(type={self.type!r}, dealer_email={self.dealer_email!r} content={self.content!r})"
 
 
+@event.handler(event_type=GENERATED_RESPONSE_EVENT)
 class GeneratedResponseEventHandler(EventHandler):
     async def handle(self, event: Event):
         if not isinstance(event, GeneratedResponseEvent):
@@ -53,6 +55,7 @@ class NewMailEvent(Event):
         return f"{self.__class__.__name__}(type={self.type!r}, sender={self.sender!r}, receiver={self.receiver!r}, content={self.content!r})"
 
 
+@event.handler(event_type=NEW_MAIL_EVENT)
 class NewMailEventHandler(EventHandler):
     async def handle(self, event: Event):
         if not isinstance(event, NewMailEvent):
@@ -66,11 +69,3 @@ class NewMailEventHandler(EventHandler):
             content=message,
             message_type=MessageType.MailContent,
         )
-
-
-async def _register_handlers():
-    await register_handler(GENERATED_RESPONSE_EVENT, GeneratedResponseEventHandler())
-    await register_handler(NEW_MAIL_EVENT, NewMailEventHandler())
-
-
-asyncio.run(_register_handlers())

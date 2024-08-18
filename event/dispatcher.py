@@ -7,39 +7,29 @@ from event.handler import EventHandler
 
 logger = logging.getLogger(__name__)
 
-# TODO: use decorator to register even handler
-# event_handler_registry: dict[str, EventHandler] = {}
+_event_handler_registry: dict[str, EventHandler] = {}
 
 
-# def register_handler(event_type: str):
-#     """decorator to register a given function as an event handler
+def handler(event_type: str):
+    """decorator to register a given function as an event handler
 
-#     Args:
-#         event_type (str): type of the event
-#     """
+    Args:
+        event_type (str): type of the event
+    """
 
-#     def register_handler_inner(func):
-#         event_handler_registry[event_type] = func
-#         return func
+    def register_handler_inner(cls):
+        _event_handler_registry[event_type] = cls()
+        return cls
 
-#     return register_handler_inner
+    return register_handler_inner
 
 
 class EventDispatcher:
     def __init__(self):
         self._queue: asyncio.Queue[Event] = asyncio.Queue()
-        self._handlers: dict[str, EventHandler] = {}
         self._running = False
         self._lock = asyncio.Lock()
         self._shutdown_event = asyncio.Event()
-
-    async def register(self, event_type: str, handler: EventHandler) -> None:
-        async with self._lock:
-            if event_type in self._handlers:
-                logger.warning(
-                    f"duplicate handler registered for event_type {event_type}, old value will be overriden"
-                )
-            self._handlers[event_type] = handler
 
     async def put_event(self, event: Event):
         await self._queue.put(event)
@@ -58,27 +48,31 @@ class EventDispatcher:
         while await self._is_running():
             try:
                 event = await asyncio.wait_for(self._queue.get(), timeout=1.0)
-                if event.type in self._handlers:
+                if event.type in _event_handler_registry:
                     logger.info(f"received new event {event}, executing")
-                    handler = self._handlers[event.type]
+                    handler = _event_handler_registry[event.type]
                     # TODO: deal with handler exception
                     asyncio.create_task(handler.handle(event))
                 else:
                     logger.error(f"event {event} has unknown type, skipped")
-                self._queue.task_done()
             except asyncio.TimeoutError:
                 if self._shutdown_event.is_set():
                     logger.info("gracefully shutting down")
                     break
+            except asyncio.CancelledError:
+                logger.info("task is already cancelled")
+                break
             except Exception as e:
                 print(f"Error processing event {event}, err: {e}")
+            finally:
+                self._queue.task_done()
 
         logger.info("draining unfinished events")
         while not self._queue.empty():
             event = self._queue.get_nowait()
-            if event.type in self._handlers:
+            if event.type in _event_handler_registry:
                 logger.info(f"received new event {event}, executing")
-                handler = self._handlers[event.type]
+                handler = _event_handler_registry[event.type]
                 await handler(event)
             self._queue.task_done()
 
@@ -87,14 +81,21 @@ class EventDispatcher:
     async def stop(self):
         await self._set_running(False)
         self._shutdown_event.set()
+        # wait until the queue is drained
+        while not self._queue.empty():
+            await asyncio.sleep(0.1)
 
 
-default_event_dispatcher = EventDispatcher()
+_default_event_dispatcher = EventDispatcher()
 
 
-async def register_handler(event_type: str, handler: EventHandler):
-    await default_event_dispatcher.register(event_type, handler)
+async def start():
+    await _default_event_dispatcher.start()
+
+
+async def stop():
+    await _default_event_dispatcher.stop()
 
 
 async def put_event(event: Event):
-    await default_event_dispatcher.put_event(event)
+    await _default_event_dispatcher.put_event(event)
